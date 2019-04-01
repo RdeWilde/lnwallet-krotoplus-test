@@ -1,0 +1,40 @@
+{
+  "protoBuilders": [
+    {
+      "filter": { "excludePath": ["google/*"] },
+      "unwrapBuilders": true,
+      "useDslMarkers": true
+    }
+  ],
+  "grpcStubExts": [
+    { "supportCoroutines": true }
+  ],
+  "generatorScripts": [
+    {
+      "scriptPath": ["helloThere.kts"],
+      "scriptBundle": "kp-scripts/build/libs/kp-scripts.jar"
+    }
+  ],
+  "insertions": [
+    {
+      "filter": { "includePath": [ "lnrpc/*" ] },
+      "entry": [
+        {
+          "point": "MESSAGE_IMPLEMENTS",
+          "scriptPath": ["extendableMessages.kts"],
+          "scriptBundle": "kp-scripts/build/libs/kp-scripts.jar"
+        },
+        {
+          "point": "BUILDER_IMPLEMENTS",
+          "scriptPath": ["extendableMessages.kts"],
+          "scriptBundle": "kp-scripts/build/libs/kp-scripts.jar"
+        },
+        {
+          "point": "CLASS_SCOPE",
+          "scriptPath": ["extendableMessages.kts"],
+          "scriptBundle": "kp-scripts/build/libs/kp-scripts.jar"
+        }
+      ]
+    }
+  ]
+}
