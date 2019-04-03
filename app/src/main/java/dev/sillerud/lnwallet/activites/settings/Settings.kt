@@ -7,6 +7,8 @@ import android.support.v7.preference.Preference
 import android.support.v7.preference.PreferenceCategory
 import android.support.v7.preference.PreferenceFragmentCompat
 import dev.sillerud.lnwallet.R
+import dev.sillerud.lnwallet.activites.ActivityBase
+import dev.sillerud.lnwallet.activites.LightningAwareActivity
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -27,7 +29,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
         screen.addPreference(walletCategory)
 
-        preferenceManager.sharedPreferences.getStringSet("lnd_connection_ids", mutableSetOf())?.forEach { connectionId ->
+        preferenceManager.sharedPreferences.getStringSet(WalletSettingsActivity.LN_CONNECTION_IDS, mutableSetOf())?.forEach { connectionId ->
             val connectionInfo = preferenceManager.sharedPreferences.getLightningConnectionInfo(connectionId)
             walletCategory.addPreference(Preference(context).apply {
                 key = connectionId
@@ -36,8 +38,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
                 setOnPreferenceClickListener {
                     startActivityForResult(Intent(context, WalletSettingsActivity::class.java).apply {
-                        putExtra("lightning_connection_id", connectionId)
-                        putExtra("lightning_connection_info", connectionInfo)
+                        putExtra(ActivityBase.LN_CONNECTION_ID_EXTRA, connectionId)
+                        putExtra(ActivityBase.LN_CONNECTION_INFO_EXTRA, connectionInfo)
                     }, 1)
 
                     true

@@ -1,7 +1,7 @@
-import com.google.protobuf.gradle.GenerateProtoTask
 import com.google.protobuf.gradle.*
 
 val coroutinesVersion = "1.1.1"
+val jacksonVersion = "2.9.7"
 val krotoPlusVersion = "0.2.2-RC3"
 val kotlinVersion = "1.3.21"
 val protocVersion = "3.7.0"
@@ -91,6 +91,7 @@ dependencies {
     implementation("io.grpc:grpc-stub:$grpcVersion")
     implementation("io.grpc:grpc-okhttp:$grpcVersion")
     implementation("javax.annotation:javax.annotation-api:1.3.2")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlinVersion")
     implementation("com.android.support:appcompat-v7:28.0.0")
@@ -98,7 +99,7 @@ dependencies {
 
     implementation("com.android.support.constraint:constraint-layout:1.1.3")
     implementation("com.android.support:design:28.0.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutinesVersion")
     implementation("com.github.marcoferrer.krotoplus:kroto-plus-coroutines:$krotoPlusVersion")
     implementation("com.android.support:support-v4:28.0.0")
 

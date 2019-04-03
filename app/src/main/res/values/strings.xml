@@ -7,4 +7,8 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="nav_header_title">Lightning wallet</string>
     <string name="nav_header_desc">Navigation header</string>
+    <string name="not_enough_available_funds">Not enough available funds</string>
+    <string name="complete_payment">Complete payment</string>
+    <string name="expired">Expired</string>
+    <string name="payment_in_progress">Payment in progress</string>
 </resources>

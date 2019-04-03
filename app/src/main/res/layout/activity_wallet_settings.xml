@@ -39,7 +39,7 @@
             android:layout_height="wrap_content"
             android:inputType="textPersonName"
             android:ems="10"
-            tools:layout_editor_absoluteY="90dp" tools:layout_editor_absoluteX="64dp" android:id="@+id/lndHost"
+            tools:layout_editor_absoluteY="90dp" tools:layout_editor_absoluteX="64dp" android:id="@+id/lnHost"
             android:hint="127.0.0.1:10009"/>
     <Button
             android:text="Select certificate"
