@@ -54,7 +54,7 @@ abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
                     val uri = Uri.parse(intentResult.contents)
                     handleLndConnectUri(uri)
                 }
-                intentResult.contents.matches(Regex("ln(.+)(\\d+)(.*)1.+")) -> {
+                intentResult.contents.matches(Regex("(?:.+:)?ln(.+)(\\d+)(.*)1.+")) -> {
                     Log.i("qr-scan", "Found payment qr code, creating payment intent")
                     startActivityForResult(Intent(this, PaymentActivity::class.java).apply {
                         putExtra(PaymentActivity.PAYMENT_INFO_EXTRA, intentResult.contents)

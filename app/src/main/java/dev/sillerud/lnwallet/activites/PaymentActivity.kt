@@ -23,7 +23,7 @@ class PaymentActivity : LightningAwareActivity() {
     ) {
         buttonPayRequest.isEnabled = false
 
-        val paymentRequest = intent.getStringExtra(PAYMENT_INFO_EXTRA)
+        val paymentRequest = intent.getStringExtra(PAYMENT_INFO_EXTRA)?.split(":")?.last()
 
         if (paymentRequest == null) {
             Log.w("payment-activity", "Unable to find payment info")
