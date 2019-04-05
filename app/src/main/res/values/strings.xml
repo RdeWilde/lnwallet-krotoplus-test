@@ -11,4 +11,6 @@
     <string name="complete_payment">Complete payment</string>
     <string name="expired">Expired</string>
     <string name="payment_in_progress">Payment in progress</string>
+    <string name="settings_currency">Currency</string>
+    <string name="settings_currency_summary">Select local currency</string>
 </resources>

@@ -4,6 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import dev.sillerud.lnwallet.R
+import dev.sillerud.lnwallet.activites.settings.SettingsActivity
+import dev.sillerud.lnwallet.activites.settings.SettingsFragment
+import dev.sillerud.lnwallet.activites.settings.getLightningConnectionInfo
 import dev.sillerud.lnwallet.getPrice
 import kotlinx.android.synthetic.main.activity_payment.*
 import kotlinx.coroutines.*
@@ -21,8 +24,13 @@ class PaymentActivity : LightningAwareActivity() {
         oldStub: LightningCoroutineGrpc.LightningCoroutineStub?,
         currentStub: LightningCoroutineGrpc.LightningCoroutineStub
     ) {
+        val connectionInfo = sharedPreferences.getLightningConnectionInfo(currentConnectionId!!)
+        val localCurrency = sharedPreferences.getString(SettingsFragment.LOCAL_CURRENCY_PREFERENCE,
+            SettingsFragment.LOCAL_CURRENCY_PREFERENCE_DEFAULT_VALUE)
+
         buttonPayRequest.isEnabled = false
 
+        // TODO: Parse this with the regexp groups
         val paymentRequest = intent.getStringExtra(PAYMENT_INFO_EXTRA)?.split(":")?.last()
 
         if (paymentRequest == null) {
@@ -42,9 +50,8 @@ class PaymentActivity : LightningAwareActivity() {
             0
         }
         val channelBalance = currentStub.channelBalance(Rpc.ChannelBalanceRequest.newBuilder().build())
-        // TODO: Make this based on lightning node
-        val alternativeCurrency = "NOK"
-        getPrice("LTC", alternativeCurrency) { priceWrapper ->
+
+        getPrice(connectionInfo.network!!.displayName, localCurrency) { priceWrapper ->
             val price = priceWrapper.data
             runOnUiThread {
                 textPriceTotal.text = "${textPriceTotal.text}\n (${price.amount.toDouble() * 0.00000001 * paymentInfo.numSatoshis} ${price.currency})"
@@ -83,5 +90,6 @@ class PaymentActivity : LightningAwareActivity() {
 
     companion object {
         const val PAYMENT_INFO_EXTRA = "payment_info"
+        val PAYMENT_URI_REGEXP = Regex("(?:(?:lightning|bitcoin):)?(ln(.+)(\\d+)(.*)1.+)")
     }
 }

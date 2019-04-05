@@ -5,11 +5,17 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.support.v7.preference.PreferenceManager
 import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import dev.sillerud.lnwallet.LightningConnectionInfo
+import dev.sillerud.lnwallet.Network
 import dev.sillerud.lnwallet.R
 import dev.sillerud.lnwallet.activites.ActivityBase
+import dev.sillerud.lnwallet.createLightningStub
+import io.grpc.ManagedChannel
 import kotlinx.android.synthetic.main.activity_wallet_settings.*
+import kotlinx.coroutines.runBlocking
+import lnrpc.Rpc
 import java.io.File
 import java.util.*
 
@@ -57,13 +63,18 @@ class WalletSettingsActivity : ActivityBase() {
             }
             val hostName = connectionParts[0]
             val port = connectionParts[1].toInt()
-            val connectionInfo = LightningConnectionInfo(
+            val initialConnectionInfo = LightningConnectionInfo(
                 host = hostName,
                 port = port,
                 macaroon = macaroonBytes!!,
                 certificate = certificateBytes!!,
+                network = null,
                 name = walletName.text?.toString()
             )
+
+            val network = getNetworkFor(initialConnectionInfo)
+            val connectionInfo = initialConnectionInfo.copy(network = network)
+
             val preferences = PreferenceManager.getDefaultSharedPreferences(this)
             val connectionIds = preferences.getStringSet(LN_CONNECTION_IDS, mutableSetOf())!!
             if (!connectionIds.contains(connectionId)) {
@@ -80,6 +91,14 @@ class WalletSettingsActivity : ActivityBase() {
             })
             finish()
         }
+    }
+
+    fun getNetworkFor(connectionInfo: LightningConnectionInfo) = runBlocking {
+        val connection = createLightningStub(connectionInfo, this.coroutineContext)
+        val nodeInfo = connection.getInfo(Rpc.GetInfoRequest.newBuilder().build())
+        val chain = nodeInfo.chainsList.first()
+        (connection.channel as ManagedChannel).shutdownNow()
+        Network.byChainAndNetwork(chain.chain, chain.network)
     }
 
     override fun onCurrentConnectionIdChange(oldConnectionId: String?, newConnectionId: String) {}
@@ -105,6 +124,7 @@ fun SharedPreferences.Editor.putLightningConnectionInfo(id: String, connectionIn
         .putInt("ln_connection_${id}_port", connectionInfo.port)
         .putString("ln_connection_${id}_certificate", Base64.encodeToString(connectionInfo.certificate, Base64.DEFAULT))
         .putString("ln_connection_${id}_macaroon", Base64.encodeToString(connectionInfo.macaroon, Base64.DEFAULT))
+        .putString("ln_connection_${id}_network_name", connectionInfo.network!!.name)
         .putString("ln_connection_${id}_name", connectionInfo.name)
 
 fun SharedPreferences.getLightningConnectionInfo(id: String) = LightningConnectionInfo(
@@ -112,6 +132,7 @@ fun SharedPreferences.getLightningConnectionInfo(id: String) = LightningConnecti
     port = getInt("ln_connection_${id}_port", 0),
     certificate = Base64.decode(getString("ln_connection_${id}_certificate", null), Base64.DEFAULT),
     macaroon = Base64.decode(getString("ln_connection_${id}_macaroon", null), Base64.DEFAULT),
+    network = Network.valueOf(getString("ln_connection_${id}_network_name", null) ?: throw RuntimeException("Missing config entry for network")),
     name = getString("ln_connection_${id}_name", null)
 )
 

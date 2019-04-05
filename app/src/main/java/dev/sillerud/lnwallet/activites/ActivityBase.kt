@@ -54,7 +54,7 @@ abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
                     val uri = Uri.parse(intentResult.contents)
                     handleLndConnectUri(uri)
                 }
-                intentResult.contents.matches(Regex("(?:.+:)?ln(.+)(\\d+)(.*)1.+")) -> {
+                intentResult.contents.matches(PaymentActivity.PAYMENT_URI_REGEXP) -> {
                     Log.i("qr-scan", "Found payment qr code, creating payment intent")
                     startActivityForResult(Intent(this, PaymentActivity::class.java).apply {
                         putExtra(PaymentActivity.PAYMENT_INFO_EXTRA, intentResult.contents)
@@ -75,8 +75,14 @@ abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
 
         val macaroonBytes = Base64.decode(uri.getQueryParameter("macaroon"), Base64.URL_SAFE)
         val certBytes = Base64.decode(uri.getQueryParameter("cert"), Base64.URL_SAFE)
-        val lightningConnectionInfo =
-            LightningConnectionInfo(uri.host!!, uri.port, macaroonBytes, certBytes, null)
+        val lightningConnectionInfo = LightningConnectionInfo(
+            host = uri.host!!,
+            port = uri.port,
+            macaroon = macaroonBytes,
+            certificate = certBytes,
+            network = null,
+            name = null
+        )
         Log.i("qr-scan", "Parsed uri result $lightningConnectionInfo")
 
 

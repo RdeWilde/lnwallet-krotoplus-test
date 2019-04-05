@@ -8,6 +8,7 @@ data class LightningConnectionInfo(
     val port: Int,
     val macaroon: ByteArray,
     val certificate: ByteArray,
+    val network: Network?,
     val name: String?
 ) : Parcelable {
     override fun writeToParcel(dest: Parcel, flags: Int) {
@@ -17,6 +18,7 @@ data class LightningConnectionInfo(
         dest.writeByteArray(macaroon)
         dest.writeInt(certificate.size)
         dest.writeByteArray(certificate)
+        dest.writeString(network?.name)
         dest.writeString(name)
     }
 
@@ -32,8 +34,9 @@ data class LightningConnectionInfo(
                 source.readByteArray(macaroonBytes)
                 val certificateBytes = ByteArray(source.readInt())
                 source.readByteArray(certificateBytes)
+                val network = source.readString()?.let { Network.valueOf(it) }
                 val name = source.readString()
-                return LightningConnectionInfo(host, port, macaroonBytes, certificateBytes, name)
+                return LightningConnectionInfo(host, port, macaroonBytes, certificateBytes, network, name)
             }
 
             override fun newArray(size: Int): Array<LightningConnectionInfo?> = arrayOfNulls(size)
