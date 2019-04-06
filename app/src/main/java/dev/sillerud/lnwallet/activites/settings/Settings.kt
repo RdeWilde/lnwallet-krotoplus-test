@@ -7,6 +7,7 @@ import android.support.v7.preference.*
 import dev.sillerud.lnwallet.LocalCurrency
 import dev.sillerud.lnwallet.R
 import dev.sillerud.lnwallet.activites.ActivityBase
+import java.util.*
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -28,7 +29,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
         screen.addPreference(walletCategory)
 
         preferenceManager.sharedPreferences.getStringSet(WalletSettingsActivity.LN_CONNECTION_IDS, mutableSetOf())?.forEach { connectionId ->
-            val connectionInfo = preferenceManager.sharedPreferences.getLightningConnectionInfo(connectionId)
+            val connectionInfo = preferenceManager.sharedPreferences.getLightningConnectionInfo(connectionId)!!
             walletCategory.addPreference(Preference(context).apply {
                 key = connectionId
                 title = "${connectionInfo.name} (${connectionInfo.network!!.displayName})"
@@ -36,7 +37,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
 
                 setOnPreferenceClickListener {
                     startActivityForResult(Intent(context, WalletSettingsActivity::class.java).apply {
-                        putExtra(ActivityBase.LN_CONNECTION_ID_EXTRA, connectionId)
                         putExtra(ActivityBase.LN_CONNECTION_INFO_EXTRA, connectionInfo)
                     }, 1)
 
@@ -50,7 +50,9 @@ class SettingsFragment : PreferenceFragmentCompat() {
             title = "Add wallet"
             summary = "Add a new lightning wallet"
             setOnPreferenceClickListener {
-                startActivityForResult(Intent(context, WalletSettingsActivity::class.java), 1)
+                startActivityForResult(Intent(context, WalletSettingsActivity::class.java).apply {
+                    putExtra(ActivityBase.LN_CONNECTION_ID_EXTRA, UUID.randomUUID().toString())
+                }, 1)
 
                 true
             }

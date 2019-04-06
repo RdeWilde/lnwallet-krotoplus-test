@@ -9,10 +9,15 @@
                 android:icon="@drawable/ic_menu_camera"
                 android:title="Scan invoice QR"/>
     </group>
-    <group android:checkableBehavior="single"
-           android:title="Wallets"
-           android:id="@+id/walletList">
-    </group>
+
+    <item android:title="Wallets"
+          android:id="@+id/wallet_list">
+        <menu>
+            <group android:checkableBehavior="single"
+                   android:id="@+id/wallet_list_group">
+            </group>
+        </menu>
+    </item>
 
     <item android:title="Other">
         <menu>

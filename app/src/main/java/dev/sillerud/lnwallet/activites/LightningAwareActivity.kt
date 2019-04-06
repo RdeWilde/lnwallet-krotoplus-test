@@ -25,7 +25,9 @@ abstract class LightningAwareActivity : ActivityBase() {
     }
 
     override fun onCurrentConnectionIdChange(oldConnectionId: String?, newConnectionId: String) {
-        lightningStub = createLightningStub(sharedPreferences.getLightningConnectionInfo(newConnectionId), coroutineContext)
+        lightningStub = sharedPreferences.getLightningConnectionInfo(newConnectionId)?.let { connectionInfo ->
+            createLightningStub(connectionInfo, coroutineContext)
+        }
     }
 
     private fun closeChannel(stub: LightningCoroutineGrpc.LightningCoroutineStub?) {

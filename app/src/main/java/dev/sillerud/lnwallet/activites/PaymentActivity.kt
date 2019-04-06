@@ -51,7 +51,7 @@ class PaymentActivity : LightningAwareActivity() {
         }
         val channelBalance = currentStub.channelBalance(Rpc.ChannelBalanceRequest.newBuilder().build())
 
-        getPrice(connectionInfo.network!!.displayName, localCurrency) { priceWrapper ->
+        getPrice(connectionInfo!!.network!!.displayName, localCurrency) { priceWrapper ->
             val price = priceWrapper.data
             runOnUiThread {
                 textPriceTotal.text = "${textPriceTotal.text}\n (${price.amount.toDouble() * 0.00000001 * paymentInfo.numSatoshis} ${price.currency})"

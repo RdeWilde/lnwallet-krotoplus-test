@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.support.v7.preference.PreferenceManager
 import android.util.Base64
-import android.util.Log
 import android.widget.Toast
 import dev.sillerud.lnwallet.LightningConnectionInfo
 import dev.sillerud.lnwallet.Network
@@ -17,10 +16,8 @@ import kotlinx.android.synthetic.main.activity_wallet_settings.*
 import kotlinx.coroutines.runBlocking
 import lnrpc.Rpc
 import java.io.File
-import java.util.*
 
 class WalletSettingsActivity : ActivityBase() {
-    lateinit var connectionId: String
     private var requestCode: Int = -1
     var certificateBytes: ByteArray? = null
     var macaroonBytes: ByteArray? = null
@@ -28,15 +25,13 @@ class WalletSettingsActivity : ActivityBase() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_wallet_settings)
-        intent.getParcelableExtra<LightningConnectionInfo?>(LN_CONNECTION_INFO_EXTRA)?.let { connectionInfo ->
+        getLaunchConnectionInfo()?.let { connectionInfo ->
             lnHost.setText("${connectionInfo.host}:${connectionInfo.port}")
             walletName.setText(connectionInfo.name)
             certificateBytes = connectionInfo.certificate
             macaroonBytes = connectionInfo.macaroon
         }
         requestCode = intent.getIntExtra("requestCode", requestCode)
-
-        connectionId = intent.getStringExtra(LN_CONNECTION_ID_EXTRA) ?: UUID.randomUUID().toString()
 
         buttonSelectCertificate.setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply {
@@ -64,6 +59,7 @@ class WalletSettingsActivity : ActivityBase() {
             val hostName = connectionParts[0]
             val port = connectionParts[1].toInt()
             val initialConnectionInfo = LightningConnectionInfo(
+                connectionId = currentConnectionId!!,
                 host = hostName,
                 port = port,
                 macaroon = macaroonBytes!!,
@@ -77,14 +73,14 @@ class WalletSettingsActivity : ActivityBase() {
 
             val preferences = PreferenceManager.getDefaultSharedPreferences(this)
             val connectionIds = preferences.getStringSet(LN_CONNECTION_IDS, mutableSetOf())!!
-            if (!connectionIds.contains(connectionId)) {
-                connectionIds.add(connectionId)
+            if (!connectionIds.contains(currentConnectionId!!)) {
+                connectionIds.add(currentConnectionId!!)
                 preferences.edit()
                     .putStringSet(LN_CONNECTION_IDS, connectionIds)
                     .apply()
             }
             preferences.edit()
-                .putLightningConnectionInfo(connectionId, connectionInfo)
+                .putLightningConnectionInfo(currentConnectionId!!, connectionInfo)
                 .apply()
             setResult(requestCode, Intent().apply {
                 putExtra(ActivityBase.LN_CONNECTION_INFO_EXTRA, connectionInfo)
@@ -127,12 +123,15 @@ fun SharedPreferences.Editor.putLightningConnectionInfo(id: String, connectionIn
         .putString("ln_connection_${id}_network_name", connectionInfo.network!!.name)
         .putString("ln_connection_${id}_name", connectionInfo.name)
 
-fun SharedPreferences.getLightningConnectionInfo(id: String) = LightningConnectionInfo(
-    host = getString("ln_connection_${id}_host", null)!!,
-    port = getInt("ln_connection_${id}_port", 0),
-    certificate = Base64.decode(getString("ln_connection_${id}_certificate", null), Base64.DEFAULT),
-    macaroon = Base64.decode(getString("ln_connection_${id}_macaroon", null), Base64.DEFAULT),
-    network = Network.valueOf(getString("ln_connection_${id}_network_name", null) ?: throw RuntimeException("Missing config entry for network")),
-    name = getString("ln_connection_${id}_name", null)
-)
+fun SharedPreferences.getLightningConnectionInfo(id: String) = getString("ln_connection_${id}_host", null)?.let { host ->
+    LightningConnectionInfo(
+        connectionId = id,
+        host = host,
+        port = getInt("ln_connection_${id}_port", 0),
+        certificate = Base64.decode(getString("ln_connection_${id}_certificate", null), Base64.DEFAULT),
+        macaroon = Base64.decode(getString("ln_connection_${id}_macaroon", null), Base64.DEFAULT),
+        network = Network.valueOf(getString("ln_connection_${id}_network_name", null) ?: throw RuntimeException("Missing config entry for network")),
+        name = getString("ln_connection_${id}_name", null)
+    )
+}
 

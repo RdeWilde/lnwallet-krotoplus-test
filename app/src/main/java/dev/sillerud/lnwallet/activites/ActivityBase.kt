@@ -17,6 +17,7 @@ import dev.sillerud.lnwallet.activites.settings.getLightningConnectionInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
@@ -76,6 +77,7 @@ abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
         val macaroonBytes = Base64.decode(uri.getQueryParameter("macaroon"), Base64.URL_SAFE)
         val certBytes = Base64.decode(uri.getQueryParameter("cert"), Base64.URL_SAFE)
         val lightningConnectionInfo = LightningConnectionInfo(
+            connectionId = UUID.randomUUID().toString(),
             host = uri.host!!,
             port = uri.port,
             macaroon = macaroonBytes,
@@ -93,8 +95,8 @@ abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
     }
 
     fun getLaunchConnectionInfo(): LightningConnectionInfo? =
-        intent.getParcelableExtra(LN_CONNECTION_INFO_EXTRA) ?:
-        currentConnectionId?.let { id -> sharedPreferences.getLightningConnectionInfo(id) }
+        intent.getParcelableExtra(LN_CONNECTION_INFO_EXTRA)
+            ?: currentConnectionId?.let { id -> sharedPreferences.getLightningConnectionInfo(id) }
 
     fun initQrScan() {
         IntentIntegrator(this)

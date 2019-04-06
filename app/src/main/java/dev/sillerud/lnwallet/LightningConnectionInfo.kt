@@ -4,6 +4,7 @@ import android.os.Parcel
 import android.os.Parcelable
 
 data class LightningConnectionInfo(
+    val connectionId: String,
     val host: String,
     val port: Int,
     val macaroon: ByteArray,
@@ -12,6 +13,7 @@ data class LightningConnectionInfo(
     val name: String?
 ) : Parcelable {
     override fun writeToParcel(dest: Parcel, flags: Int) {
+        dest.writeString(connectionId)
         dest.writeString(host)
         dest.writeInt(port)
         dest.writeInt(macaroon.size)
@@ -28,6 +30,7 @@ data class LightningConnectionInfo(
         @JvmField
         val CREATOR: Parcelable.Creator<LightningConnectionInfo> = object : Parcelable.Creator<LightningConnectionInfo> {
             override fun createFromParcel(source: Parcel): LightningConnectionInfo {
+                val connectionId = source.readString()!!
                 val host = source.readString()!!
                 val port = source.readInt()
                 val macaroonBytes = ByteArray(source.readInt())
@@ -36,7 +39,7 @@ data class LightningConnectionInfo(
                 source.readByteArray(certificateBytes)
                 val network = source.readString()?.let { Network.valueOf(it) }
                 val name = source.readString()
-                return LightningConnectionInfo(host, port, macaroonBytes, certificateBytes, network, name)
+                return LightningConnectionInfo(connectionId, host, port, macaroonBytes, certificateBytes, network, name)
             }
 
             override fun newArray(size: Int): Array<LightningConnectionInfo?> = arrayOfNulls(size)

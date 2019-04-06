@@ -18,4 +18,5 @@
     <string name="crypto_currency_format">%.10f %s</string>
     <string name="local_currency_format">≈ %.2f %s</string>
     <string name="empty_balance">0</string>
+    <string name="node_information">Node information</string>
 </resources>

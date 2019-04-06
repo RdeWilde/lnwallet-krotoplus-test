@@ -40,18 +40,7 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
         main_activity.addDrawerListener(toggle)
         toggle.syncState()
 
-        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        sharedPreferences?.getStringSet(WalletSettingsActivity.LN_CONNECTION_IDS, null)
-            ?.map { it to sharedPreferences.getLightningConnectionInfo(it) }
-            ?.forEach {  (connectionId, connectionInfo) ->
-                val item = navigationView.menu.add(R.id.walletList, Menu.NONE, 0, connectionInfo.name ?: connectionInfo.host)
-                item.setOnMenuItemClickListener {
-                    currentConnectionId = connectionId
-                    startActivity(Intent(this, WalletActivity::class.java)
-                        .putExtra(LN_CONNECTION_INFO_EXTRA, connectionInfo))
-                    true
-                }
-            }
+        updateWalletList()
         navigationView.setNavigationItemSelectedListener(this)
 
         val localCurrency = sharedPreferences.getString(SettingsFragment.LOCAL_CURRENCY_PREFERENCE,
@@ -65,8 +54,28 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
 
     override fun onResume() {
         super.onResume()
+        updateWalletList()
         initializeConnection()
     }
+
+    fun updateWalletList() {
+        val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        val subMenu = navigationView.menu.items().first { it.itemId == R.id.wallet_list }.subMenu
+        subMenu.clear()
+
+        sharedPreferences?.getStringSet(WalletSettingsActivity.LN_CONNECTION_IDS, null)
+            ?.map { it to sharedPreferences.getLightningConnectionInfo(it)!! }
+            ?.forEach {  (connectionId, connectionInfo) ->
+                val item = subMenu.add(R.id.wallet_list_group, Menu.NONE, 0, connectionInfo.name ?: connectionInfo.host)
+                item.setOnMenuItemClickListener {
+                    currentConnectionId = connectionId
+                    main_activity.closeDrawer(GravityCompat.START)
+                    true
+                }
+            }
+    }
+
+    fun Menu.items() = 0.until(size()).map { getItem(it) }
 
     override suspend fun onWalletChange(
         oldStub: LightningCoroutineGrpc.LightningCoroutineStub?,
@@ -74,7 +83,7 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
     ) {
         val localCurrency = sharedPreferences.getString(SettingsFragment.LOCAL_CURRENCY_PREFERENCE,
             SettingsFragment.LOCAL_CURRENCY_PREFERENCE_DEFAULT_VALUE)!!
-        val connectionInfo = sharedPreferences.getLightningConnectionInfo(currentConnectionId!!)
+        val connectionInfo = sharedPreferences.getLightningConnectionInfo(currentConnectionId!!)!!
 
         val channelBalance = currentStub.channelBalance(Rpc.ChannelBalanceRequest.newBuilder().build())
 
@@ -84,7 +93,8 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
         textCryptoBalance.text = connectionInfo.network!!.balanceFormat(combinedBalance)
         getPrice(connectionInfo.network.displayName, localCurrency) {
             launch {
-                textLocalBalance.text = getString(R.string.local_currency_format).format(it.data.amount.toDouble() * wholeCoins, localCurrency)
+                textLocalBalance.text = getString(R.string.local_currency_format)
+                    .format(it.data.amount.toDouble() * wholeCoins, localCurrency)
             }
         }
     }
@@ -98,15 +108,16 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.activity_main_drawer, menu)
+        menuInflater.inflate(R.menu.menu_main, menu)
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_settings -> return true
-            else -> return super.onOptionsItemSelected(item)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_settings -> run {
+            startActivity(Intent(this, WalletSettingsActivity::class.java))
+            true
         }
+        else -> super.onOptionsItemSelected(item)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
