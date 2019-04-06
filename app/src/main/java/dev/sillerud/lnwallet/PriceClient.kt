@@ -10,6 +10,7 @@ import com.squareup.okhttp.Request
 import com.squareup.okhttp.Response
 import java.io.IOException
 
+fun wholeUnits(satoshi: Long) = 0.00000001*satoshi
 
 fun getPrice(crypto: String, currency: String, callback: (price: Price) -> Unit) {
     val httpClient = OkHttpClient()

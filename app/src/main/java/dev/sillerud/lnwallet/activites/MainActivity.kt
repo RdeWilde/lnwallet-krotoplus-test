@@ -10,11 +10,17 @@ import android.view.Menu
 import android.view.MenuItem
 import dev.sillerud.lnwallet.R
 import dev.sillerud.lnwallet.activites.settings.SettingsActivity
+import dev.sillerud.lnwallet.activites.settings.SettingsFragment
 import dev.sillerud.lnwallet.activites.settings.WalletSettingsActivity
 import dev.sillerud.lnwallet.activites.settings.getLightningConnectionInfo
+import dev.sillerud.lnwallet.getPrice
+import dev.sillerud.lnwallet.wholeUnits
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
+import kotlinx.android.synthetic.main.content_main.*
+import kotlinx.coroutines.launch
 import lnrpc.LightningCoroutineGrpc
+import lnrpc.Rpc
 
 class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSelectedListener {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,13 +53,40 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
                 }
             }
         navigationView.setNavigationItemSelectedListener(this)
+
+        val localCurrency = sharedPreferences.getString(SettingsFragment.LOCAL_CURRENCY_PREFERENCE,
+            SettingsFragment.LOCAL_CURRENCY_PREFERENCE_DEFAULT_VALUE)
+
+        textCryptoBalance.text = getString(R.string.empty_balance)
+        textLocalBalance.text = getString(R.string.local_currency_format).format(0.0, localCurrency)
+
+        initializeConnection()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        initializeConnection()
     }
 
     override suspend fun onWalletChange(
         oldStub: LightningCoroutineGrpc.LightningCoroutineStub?,
         currentStub: LightningCoroutineGrpc.LightningCoroutineStub
     ) {
+        val localCurrency = sharedPreferences.getString(SettingsFragment.LOCAL_CURRENCY_PREFERENCE,
+            SettingsFragment.LOCAL_CURRENCY_PREFERENCE_DEFAULT_VALUE)!!
+        val connectionInfo = sharedPreferences.getLightningConnectionInfo(currentConnectionId!!)
 
+        val channelBalance = currentStub.channelBalance(Rpc.ChannelBalanceRequest.newBuilder().build())
+
+        val combinedBalance = channelBalance.balance
+        val wholeCoins = wholeUnits(combinedBalance)
+
+        textCryptoBalance.text = connectionInfo.network!!.balanceFormat(combinedBalance)
+        getPrice(connectionInfo.network.displayName, localCurrency) {
+            launch {
+                textLocalBalance.text = getString(R.string.local_currency_format).format(it.data.amount.toDouble() * wholeCoins, localCurrency)
+            }
+        }
     }
 
     override fun onBackPressed() {

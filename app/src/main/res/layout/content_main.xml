@@ -8,5 +8,53 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:showIn="@layout/app_bar_main"
         tools:context=".activites.MainActivity">
-
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp">
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            <TextView
+                    android:text="Total balance"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:id="@+id/textBalanceHelp"
+                    android:layout_margin="10dp"/>
+            <TextView
+                    android:text="@string/crypto_currency_format"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/textCryptoBalance"
+                    android:textSize="30sp"
+                    android:layout_margin="10dp"/>
+            <TextView
+                    android:text="@string/local_currency_format"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/textLocalBalance"
+                    android:textSize="18sp"
+                    android:layout_margin="10dp"/>
+            <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+                <Button
+                        android:text="@string/receive_button_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/buttonReceive"
+                        android:layout_weight="1"
+                        android:layout_margin="10dp"/>
+                <Button
+                        android:text="@string/send_button_text"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/buttonSend"
+                        android:layout_weight="1"
+                        android:layout_margin="10dp"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
 </android.support.constraint.ConstraintLayout>

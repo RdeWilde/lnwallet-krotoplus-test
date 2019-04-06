@@ -13,4 +13,9 @@
     <string name="payment_in_progress">Payment in progress</string>
     <string name="settings_currency">Currency</string>
     <string name="settings_currency_summary">Select local currency</string>
+    <string name="send_button_text">Send</string>
+    <string name="receive_button_text">Receive</string>
+    <string name="crypto_currency_format">%.10f %s</string>
+    <string name="local_currency_format">≈ %.2f %s</string>
+    <string name="empty_balance">0</string>
 </resources>

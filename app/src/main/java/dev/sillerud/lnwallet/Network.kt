@@ -1,6 +1,13 @@
 package dev.sillerud.lnwallet
 
-enum class Network(val displayName: String, networkDisplayName: String, val bech32Prefix: String, val chain: String, val network: String) {
+enum class Network(
+    val displayName: String,
+    networkDisplayName: String,
+    val bech32Prefix: String,
+    val chain: String,
+    val network: String,
+    val balanceFormat: (balance: Long) -> String = { "${wholeUnits(it)} $displayName" }
+) {
     LTC_MAINNET("LTC", "Litecoin mainnet", "ltc", "litecoin", "mainnet"),
     LTC_TESTNET("LTC", "Litecoin testnet", "ltcb", "litecoin", "testnet"),
     LTC_SIMNET("LTC", "Litecoin simnet", "ltcsn", "litecoin", "simnet"),
