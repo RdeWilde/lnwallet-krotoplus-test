@@ -37,6 +37,13 @@
                 android:name=".activites.settings.WalletSettingsActivity"
                 android:label="@string/title_activity_wallet_settings"
                 android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <data android:scheme="lndconnect" />
+                <action android:name="android.intent.action.EDIT"/>
+
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.PREFERENCE" />
+            </intent-filter>
         </activity>
         <activity android:name=".activites.settings.SettingsActivity">
         </activity>

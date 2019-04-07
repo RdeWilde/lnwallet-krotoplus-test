@@ -6,23 +6,26 @@ import android.preference.PreferenceManager
 import android.support.design.widget.NavigationView
 import android.support.v4.view.GravityCompat
 import android.support.v7.app.ActionBarDrawerToggle
+import android.support.v7.widget.LinearLayoutManager
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import dev.sillerud.lnwallet.R
+import android.widget.TextView
+import dev.sillerud.lnwallet.*
 import dev.sillerud.lnwallet.activites.settings.SettingsActivity
 import dev.sillerud.lnwallet.activites.settings.SettingsFragment
 import dev.sillerud.lnwallet.activites.settings.WalletSettingsActivity
 import dev.sillerud.lnwallet.activites.settings.getLightningConnectionInfo
-import dev.sillerud.lnwallet.getPrice
-import dev.sillerud.lnwallet.wholeUnits
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.coroutines.launch
 import lnrpc.LightningCoroutineGrpc
-import lnrpc.Rpc
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSelectedListener {
+    val dateFormat = SimpleDateFormat.getDateInstance()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -85,7 +88,25 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
             SettingsFragment.LOCAL_CURRENCY_PREFERENCE_DEFAULT_VALUE)!!
         val connectionInfo = sharedPreferences.getLightningConnectionInfo(currentConnectionId!!)!!
 
-        val channelBalance = currentStub.channelBalance(Rpc.ChannelBalanceRequest.newBuilder().build())
+        val channelBalance = currentStub.channelBalance()
+        val networkInfo = currentStub.describeGraph()
+
+        /*val transactions = currentStub.getTransactions(Rpc.GetTransactionsRequest.newBuilder().build())
+        transactions.transactionsList.forEach {
+            Log.d("wallet-activity", it.toString())
+        }*/
+        val transactions = currentStub.listPayments().paymentsList.mapNotNull { payment ->
+            Log.d("wallet-activity", payment.toString())
+            val receivingNode = networkInfo.nodesList.find { node -> node.pubKey == payment.pathList.last() }
+                TransactionDisplayInfo(Date(payment.creationDate * 1000), null, payment.value, receivingNode?.alias)
+        }.sortedByDescending { it.transactionDate }
+            //.groupBy { dateFormat.format(it.transactionDate) }
+
+        transaction_list.apply {
+            setHasFixedSize(true)
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = TransactionAdapter(transactions, this@MainActivity)
+        }
 
         val combinedBalance = channelBalance.balance
         val wholeCoins = wholeUnits(combinedBalance)
