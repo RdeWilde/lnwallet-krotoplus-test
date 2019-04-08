@@ -20,6 +20,7 @@ import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import lnrpc.LightningCoroutineGrpc
 import java.text.SimpleDateFormat
@@ -87,7 +88,7 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
             SettingsFragment.LOCAL_CURRENCY_PREFERENCE_DEFAULT_VALUE)!!
         val connectionInfo = sharedPreferences.getLightningConnectionInfo(currentConnectionId!!)!!
 
-        runBlocking {
+        uiScope.launch {
             val channelBalanceDeferred = async(Dispatchers.IO) { currentStub.channelBalance() }
             val networkInfoDeferred = async(Dispatchers.IO) { currentStub.describeGraph() }
             val paymentsDeferred = async(Dispatchers.IO) { currentStub.listPayments() }
