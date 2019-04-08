@@ -35,12 +35,12 @@ class WalletSettingsActivity : ActivityBase() {
 
         buttonSelectCertificate.setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "*"
+                type = "file/*"
             }, CERTIFICATE_RESULT)
         }
         buttonSelectMacaroon.setOnClickListener {
             startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "*"
+                type = "file/*"
             }, MACAROON_RESULT)
         }
 

@@ -20,10 +20,12 @@ import kotlinx.coroutines.Job
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
+abstract class ActivityBase : AppCompatActivity() {
     private val job = Job()
-    override val coroutineContext: CoroutineContext = Dispatchers.Main + job
+    val uiContext: CoroutineContext = Dispatchers.Main + job
+    val uiScope = CoroutineScope(uiContext)
 
+    val ioContext: CoroutineContext = Dispatchers.IO
     lateinit var sharedPreferences: SharedPreferences
 
     var currentConnectionId: String? = null
@@ -51,6 +53,9 @@ abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
             val intentResult = IntentIntegrator.parseActivityResult(resultCode, data)
             Log.d("qr-scan", "Got qr result ${intentResult.contents}")
             when {
+                intentResult.contents == null -> {
+                    Log.d("qr-scan", "zxing returned no result")
+                }
                 intentResult.contents.startsWith("lndconnect") -> {
                     val uri = Uri.parse(intentResult.contents)
                     handleLndConnectUri(uri)
@@ -59,7 +64,7 @@ abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
                     Log.i("qr-scan", "Found payment qr code, creating payment intent")
                     startActivityForResult(Intent(this, PaymentActivity::class.java).apply {
                         putExtra(PaymentActivity.PAYMENT_INFO_EXTRA, intentResult.contents)
-                    }, 1337) // TODO
+                    }, PAYMENT)
                 }
                 else -> Toast.makeText(this, "Unhandled QR/barcode type", Toast.LENGTH_SHORT).show()
             }
@@ -107,6 +112,7 @@ abstract class ActivityBase : AppCompatActivity(), CoroutineScope {
     companion object {
         const val QR_SCAN = 1
         const val WALLET_SETTINGS = 2
+        const val PAYMENT = 3
 
         const val LN_CONNECTION_ID_EXTRA = "ln_connection_id_extra"
         const val LN_CONNECTION_INFO_EXTRA = "ln_connection_info_extra"

@@ -7,10 +7,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 import dev.sillerud.lnwallet.activites.ActivityBase
 import dev.sillerud.lnwallet.activites.settings.SettingsFragment
-import kotlinx.coroutines.launch
 
 class TransactionAdapter(
     private val transactions: List<TransactionDisplayInfo>,
+    private val localCurrencyPrice: Double,
     private val activity: ActivityBase
 ) : RecyclerView.Adapter<TransactionAdapter.TransactionHolder>() {
     class TransactionHolder(val constraintLayout: ConstraintLayout) : RecyclerView.ViewHolder(constraintLayout)
@@ -40,15 +40,7 @@ class TransactionAdapter(
         transactionLayout.findViewById<TextView>(R.id.textOtherPart).text = transaction.receivingNode
 
         // TODO: Don't run this on each transaction
-        getPrice(cryptoCurrencyDisplayName, localCurrency) {
-            activity.launch {
-                transactionLayout.findViewById<TextView>(R.id.textAmountLocalCurrency).text = localCurrencyFormat
-                    .format(it.data.amount.toDouble() * wholeCoins, localCurrency)
-            }
-        }
+        transactionLayout.findViewById<TextView>(R.id.textAmountLocalCurrency).text = localCurrencyFormat
+            .format(localCurrencyPrice * wholeCoins, localCurrency)
     }
-
-
-
-
 }

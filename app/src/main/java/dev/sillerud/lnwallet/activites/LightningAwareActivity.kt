@@ -4,6 +4,7 @@ import android.util.Log
 import dev.sillerud.lnwallet.*
 import dev.sillerud.lnwallet.activites.settings.getLightningConnectionInfo
 import io.grpc.ManagedChannel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import lnrpc.LightningCoroutineGrpc
 abstract class LightningAwareActivity : ActivityBase() {
@@ -19,27 +20,27 @@ abstract class LightningAwareActivity : ActivityBase() {
         val connectionInfo = getLaunchConnectionInfo()
 
         if (connectionInfo != null) {
-            lightningStub = createLightningStub(connectionInfo, coroutineContext)
+            lightningStub = createLightningStub(connectionInfo, Dispatchers.IO)
             Log.i("ln-aware", "Connection created to ${connectionInfo.host}:${connectionInfo.port}")
         }
     }
 
     override fun onCurrentConnectionIdChange(oldConnectionId: String?, newConnectionId: String) {
         lightningStub = sharedPreferences.getLightningConnectionInfo(newConnectionId)?.let { connectionInfo ->
-            createLightningStub(connectionInfo, coroutineContext)
+            createLightningStub(connectionInfo, Dispatchers.IO)
         }
     }
 
     private fun closeChannel(stub: LightningCoroutineGrpc.LightningCoroutineStub?) {
         stub?.channel?.let {
             if (it is ManagedChannel) {
-                it.shutdownNow()
+                it.shutdown()
             }
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onStop() {
+        super.onStop()
         closeChannel(lightningStub)
     }
 

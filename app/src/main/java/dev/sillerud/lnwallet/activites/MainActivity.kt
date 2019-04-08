@@ -10,7 +10,6 @@ import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.TextView
 import dev.sillerud.lnwallet.*
 import dev.sillerud.lnwallet.activites.settings.SettingsActivity
 import dev.sillerud.lnwallet.activites.settings.SettingsFragment
@@ -19,7 +18,9 @@ import dev.sillerud.lnwallet.activites.settings.getLightningConnectionInfo
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.app_bar_main.*
 import kotlinx.android.synthetic.main.content_main.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import lnrpc.LightningCoroutineGrpc
 import java.text.SimpleDateFormat
 import java.util.*
@@ -51,8 +52,6 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
 
         textCryptoBalance.text = getString(R.string.empty_balance)
         textLocalBalance.text = getString(R.string.local_currency_format).format(0.0, localCurrency)
-
-        initializeConnection()
     }
 
     override fun onResume() {
@@ -88,35 +87,43 @@ class MainActivity : LightningAwareActivity(), NavigationView.OnNavigationItemSe
             SettingsFragment.LOCAL_CURRENCY_PREFERENCE_DEFAULT_VALUE)!!
         val connectionInfo = sharedPreferences.getLightningConnectionInfo(currentConnectionId!!)!!
 
-        val channelBalance = currentStub.channelBalance()
-        val networkInfo = currentStub.describeGraph()
+        runBlocking {
+            val channelBalanceDeferred = async(Dispatchers.IO) { currentStub.channelBalance() }
+            val networkInfoDeferred = async(Dispatchers.IO) { currentStub.describeGraph() }
+            val paymentsDeferred = async(Dispatchers.IO) { currentStub.listPayments() }
+            val priceDeferred = async(Dispatchers.IO) { getPrice(connectionInfo.network!!.displayName, localCurrency) }
 
-        /*val transactions = currentStub.getTransactions(Rpc.GetTransactionsRequest.newBuilder().build())
-        transactions.transactionsList.forEach {
-            Log.d("wallet-activity", it.toString())
-        }*/
-        val transactions = currentStub.listPayments().paymentsList.mapNotNull { payment ->
-            Log.d("wallet-activity", payment.toString())
-            val receivingNode = networkInfo.nodesList.find { node -> node.pubKey == payment.pathList.last() }
-                TransactionDisplayInfo(Date(payment.creationDate * 1000), null, payment.value, receivingNode?.alias)
-        }.sortedByDescending { it.transactionDate }
+            /*val transactions = currentStub.getTransactions(Rpc.GetTransactionsRequest.newBuilder().build())
+            transactions.transactionsList.forEach {
+                Log.d("wallet-activity", it.toString())
+            }*/
+
+            val combinedBalance = channelBalanceDeferred.await().balance
+            textCryptoBalance.text = connectionInfo.network!!.balanceFormat(combinedBalance)
+
+            val transactions = paymentsDeferred.await().paymentsList.mapNotNull { payment ->
+                Log.d("wallet-activity", payment.toString())
+                val receivingNode = networkInfoDeferred.await().nodesList
+                    .find { node -> node.pubKey == payment.pathList.last() }
+
+                TransactionDisplayInfo(
+                    transactionDate = Date(payment.creationDate * 1000),
+                    description = null,
+                    amount = payment.value,
+                    receivingNode = receivingNode?.alias
+                )
+            }.sortedByDescending { it.transactionDate }
             //.groupBy { dateFormat.format(it.transactionDate) }
 
-        transaction_list.apply {
-            setHasFixedSize(true)
-            layoutManager = LinearLayoutManager(this@MainActivity)
-            adapter = TransactionAdapter(transactions, this@MainActivity)
-        }
-
-        val combinedBalance = channelBalance.balance
-        val wholeCoins = wholeUnits(combinedBalance)
-
-        textCryptoBalance.text = connectionInfo.network!!.balanceFormat(combinedBalance)
-        getPrice(connectionInfo.network.displayName, localCurrency) {
-            launch {
-                textLocalBalance.text = getString(R.string.local_currency_format)
-                    .format(it.data.amount.toDouble() * wholeCoins, localCurrency)
+            val localCurrencyPrice = priceDeferred.await().data.amount.toDouble()
+            transaction_list.apply {
+                setHasFixedSize(true)
+                layoutManager = LinearLayoutManager(this@MainActivity)
+                adapter = TransactionAdapter(transactions, localCurrencyPrice, this@MainActivity)
             }
+            val wholeCoins = wholeUnits(combinedBalance)
+            textLocalBalance.text = getString(R.string.local_currency_format)
+                .format(localCurrencyPrice * wholeCoins, localCurrency)
         }
     }
 

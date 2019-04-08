@@ -12,6 +12,14 @@ import java.io.IOException
 
 fun wholeUnits(satoshi: Long) = 0.00000001*satoshi
 
+val objectMapper: ObjectMapper = ObjectMapper().registerKotlinModule()
+
+fun getPrice(crypto: String, currency: String): Price = OkHttpClient()
+    .newCall(Request.Builder().url("https://api.coinbase.com/v2/prices/$crypto-$currency/buy").get().build())
+    .execute()
+    .body()
+    .use { objectMapper.readValue(it.byteStream()) }
+
 fun getPrice(crypto: String, currency: String, callback: (price: Price) -> Unit) {
     val httpClient = OkHttpClient()
     val call = Request.Builder()
